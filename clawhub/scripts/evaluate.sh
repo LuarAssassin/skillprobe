@@ -2,8 +2,9 @@
 set -euo pipefail
 
 # SECURITY MANIFEST:
-#   Environment variables accessed: OPENAI_API_KEY (only, for LLM calls)
-#   External endpoints called: OpenAI API via litellm (only)
+#   Environment variables accessed directly: none
+#   Runtime/provider environment variables may be accessed by the installed SkillProbe CLI
+#   External endpoints called: whatever configured LLM provider the installed runtime is already using
 #   Local files read: SKILL.md of target skill being evaluated
 #   Local files written: evaluation reports in outputs/ directory
 
@@ -13,14 +14,14 @@ set -euo pipefail
 if [ $# -lt 1 ]; then
     echo "Usage: evaluate.sh <skill-path> [--model MODEL] [--tasks COUNT]"
     echo ""
-    echo "Example: evaluate.sh ./skills/my-skill --model gpt-4o --tasks 30"
+    echo "Example: evaluate.sh ./skills/my-skill --model your-model --tasks 30"
     exit 1
 fi
 
 SKILL_PATH="$1"
 shift
 
-MODEL="gpt-4o"
+MODEL=""
 TASKS=30
 
 while [[ $# -gt 0 ]]; do
@@ -46,7 +47,7 @@ if [ ! -d "$SKILL_PATH" ]; then
 fi
 
 echo "SkillProbe: Evaluating skill at $SKILL_PATH"
-echo "  Model: $MODEL"
+echo "  Model: ${MODEL:-<runtime-configured>}"
 echo "  Tasks: $TASKS"
 echo ""
 
@@ -81,20 +82,23 @@ EOF
     exit 1
 fi
 
-if [ -z "${OPENAI_API_KEY:-}" ]; then
-    echo "Error: OPENAI_API_KEY environment variable is required"
-    exit 1
-fi
-
 if [ -f "$PACKAGE_ROOT/apps/cli/main.py" ]; then
+    CMD=(python -m apps.cli.main evaluate "$SKILL_PATH" --tasks "$TASKS")
+    if [ -n "$MODEL" ]; then
+        CMD+=(--model "$MODEL")
+    fi
     (
         cd "$PACKAGE_ROOT"
-        python -m apps.cli.main evaluate "$SKILL_PATH" --model "$MODEL" --tasks "$TASKS"
+        "${CMD[@]}"
     )
     exit 0
 fi
 
 if command -v skillprobe >/dev/null 2>&1; then
-    skillprobe evaluate "$SKILL_PATH" --model "$MODEL" --tasks "$TASKS"
+    CMD=(skillprobe evaluate "$SKILL_PATH" --tasks "$TASKS")
+    if [ -n "$MODEL" ]; then
+        CMD+=(--model "$MODEL")
+    fi
+    "${CMD[@]}"
     exit 0
 fi

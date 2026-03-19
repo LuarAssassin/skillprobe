@@ -1,6 +1,7 @@
 """Scoring engine: rule-based, LLM judge, and aggregate scoring."""
 
 from dataclasses import dataclass, field
+import statistics
 
 from packages.core.eval_spec.models import MetricWeights
 from packages.generators.task_generator.models import Task
@@ -51,6 +52,8 @@ def score_run(
     run: EvalRun,
     tasks: list[Task],
     weights: MetricWeights | None = None,
+    llm_judge_map: dict[str, float] | None = None,
+    stability_map: dict[str, float] | None = None,
 ) -> tuple[DimensionScores, list[TaskScore]]:
     """Score an entire run, returning aggregate and per-task scores."""
     if weights is None:
@@ -61,7 +64,13 @@ def score_run(
 
     for result in run.task_results:
         task = task_map.get(result.task_id)
-        ts = _score_single_task(result, task, weights)
+        ts = _score_single_task(
+            result,
+            task,
+            weights,
+            llm_judge_score=llm_judge_map.get(result.task_id) if llm_judge_map else None,
+            stability_score=stability_map.get(result.task_id) if stability_map else None,
+        )
         task_scores.append(ts)
 
     # Aggregate
@@ -85,6 +94,8 @@ def _score_single_task(
     result: TaskResult,
     task: Task | None,
     weights: MetricWeights,
+    llm_judge_score: float | None = None,
+    stability_score: float | None = None,
 ) -> TaskScore:
     """Score a single task result."""
     ts = TaskScore(task_id=result.task_id)
@@ -100,21 +111,35 @@ def _score_single_task(
     ts.result_score = res
     ts.notes.extend(result_notes)
 
-    # --- Map to dimensions (without LLM judge for now) ---
+    has_llm_judge = llm_judge_score is not None
+    if has_llm_judge:
+        ts.llm_judge_score = max(0.0, min(1.0, llm_judge_score or 0.0))
+
+    # --- Map to dimensions ---
     # Effectiveness (30 max): based on completion and correctness
     if result.error:
         ts.dimensions.effectiveness = 0.0
     else:
-        ts.dimensions.effectiveness = (rule * 0.4 + res * 0.6) * 30.0
+        if has_llm_judge:
+            effectiveness_core = rule * 0.3 + res * 0.4 + ts.llm_judge_score * 0.3
+        else:
+            effectiveness_core = rule * 0.4 + res * 0.6
+        ts.dimensions.effectiveness = effectiveness_core * 30.0
 
     # Quality (20 max): based on output length, structure
-    ts.dimensions.quality = _quality_heuristic(result) * 20.0
+    quality_core = _quality_heuristic(result)
+    if has_llm_judge:
+        quality_core = quality_core * 0.6 + ts.llm_judge_score * 0.4
+    ts.dimensions.quality = quality_core * 20.0
 
     # Efficiency (15 max): based on duration and tokens
     ts.dimensions.efficiency = _efficiency_score(result) * 15.0
 
-    # Stability (15 max): placeholder (needs multiple runs)
-    ts.dimensions.stability = 10.0  # default mid-score
+    # Stability (15 max): default neutral unless repeated-run variance is provided
+    if stability_score is None:
+        ts.dimensions.stability = 10.0
+    else:
+        ts.dimensions.stability = max(0.0, min(15.0, stability_score))
 
     # Trigger fitness (10 max): based on skill trigger accuracy
     ts.dimensions.trigger_fitness = _trigger_fitness(result) * 10.0
@@ -126,6 +151,39 @@ def _score_single_task(
     ts.notes.extend(safety_notes)
 
     return ts
+
+
+def build_stability_map(
+    runs: list[EvalRun],
+    tasks: list[Task],
+) -> dict[str, float]:
+    """Build per-task stability scores from repeated runs (0-15 points).
+
+    Stability is derived from run-to-run variance of each task's core
+    performance proxy: 0.5 * rule_score + 0.5 * result_score.
+    """
+    if len(runs) < 2:
+        return {}
+
+    per_task_values: dict[str, list[float]] = {}
+    for run in runs:
+        _, task_scores = score_run(run, tasks)
+        for task_score in task_scores:
+            core = task_score.rule_score * 0.5 + task_score.result_score * 0.5
+            per_task_values.setdefault(task_score.task_id, []).append(core)
+
+    stability: dict[str, float] = {}
+    for task in tasks:
+        values = per_task_values.get(task.task_id, [])
+        if len(values) < 2:
+            stability[task.task_id] = 10.0
+            continue
+
+        stddev = statistics.pstdev(values)
+        normalized = max(0.0, 1.0 - min(stddev / 0.25, 1.0))
+        stability[task.task_id] = round(normalized * 15.0, 2)
+
+    return stability
 
 
 def _rule_score(result: TaskResult, task: Task | None) -> tuple[float, list[str], dict[str, bool]]:

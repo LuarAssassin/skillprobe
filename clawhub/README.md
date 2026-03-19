@@ -25,7 +25,7 @@ clawhub install skillprobe
 ## Requirements
 
 - **In-agent or OpenClaw/ClaudeCode**: none. The runtime runs baseline and with-skill tasks using its own model; no extra API key is required.
-- **Standalone local CLI** (optional): Python 3.11+, `pip install -e /path/to/skillprobe`, and a configured LLM API key (e.g. `OPENAI_API_KEY`) only when you run the CLI outside an agent.
+- **Standalone local CLI** (optional): Python 3.11+, `pip install -e /path/to/skillprobe`, and a local runtime/provider configuration that already knows which model to use.
 
 ## Usage
 
@@ -58,7 +58,8 @@ skillprobe evaluate ./path/to/skill --tasks 30
 - The ClawHub package is optimized for prompt-guided use inside OpenClaw.
 - The local Python project validates profiles/specs/tasks/runs/reports against JSON Schema at runtime.
 - Rule-based scoring checks required fields and required tools when tasks specify them.
-- LLM judge and multi-run stability analysis are still planned extensions, not default-on behavior in the current local runtime.
+- The local CLI supports optional LLM judge scoring (`--llm-judge`) and repeated-run stability scoring (`--repeats`).
+- Standalone `skillprobe evaluate` persists result summaries and task-level scores into SQLite by default (`outputs/evaluations.db`).
 
 ## License
 

@@ -61,8 +61,9 @@ skillprobe generate-tasks ./path/to/skill --count 30
 
 当前状态说明：
 - 本地 CLI 已落地 schema validation、rule-based hard checks、evidence-rich report、reproducibility metadata
-- LLM Judge prompt 已准备好，但尚未默认接入最终聚合分
-- Stability 仍基于单次 run，后续会扩展到 repeated runs
+- 支持可选 LLM Judge（A/B 对比）并接入最终维度聚合分
+- 支持 repeated runs 稳定性评分（run-to-run variance）
+- `skillprobe evaluate` 默认会将评测结果写入 SQLite（`outputs/evaluations.db`）
 
 ## 项目结构
 

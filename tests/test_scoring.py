@@ -1,5 +1,5 @@
 from packages.core.eval_spec.models import MetricWeights
-from packages.core.scoring.engine import score_run
+from packages.core.scoring.engine import build_stability_map, score_run
 from packages.generators.task_generator.models import ScoringHints, Task
 from packages.runners.runner import EvalRun, TaskResult
 
@@ -90,3 +90,67 @@ def test_safety_notes_flag_anti_patterns():
 
     assert task_scores[0].dimensions.safety < 10.0
     assert any("anti-pattern" in note.lower() for note in task_scores[0].notes)
+
+
+def test_llm_judge_map_influences_effectiveness_and_quality_dimensions():
+    task = _task()
+    result = TaskResult(
+        task_id=task.task_id,
+        output="Summary: covered.\nActions: verify and ship.",
+        tool_calls=[{"tool": "web_search", "input": {"q": "skillprobe"}, "output": {"ok": True}}],
+        duration_ms=500,
+        tokens_input=30,
+        tokens_output=20,
+    )
+
+    _, no_judge_scores = score_run(_run(result), [task], MetricWeights())
+    _, with_judge_scores = score_run(
+        _run(result),
+        [task],
+        MetricWeights(),
+        llm_judge_map={task.task_id: 1.0},
+    )
+
+    assert with_judge_scores[0].llm_judge_score == 1.0
+    assert with_judge_scores[0].dimensions.effectiveness > no_judge_scores[0].dimensions.effectiveness
+    assert with_judge_scores[0].dimensions.quality > no_judge_scores[0].dimensions.quality
+
+
+def test_build_stability_map_penalizes_run_to_run_variance():
+    task = _task()
+    stable_run_a = _run(
+        TaskResult(
+            task_id=task.task_id,
+            output="Summary: complete.\nActions: execute.",
+            tool_calls=[{"tool": "web_search"}],
+            duration_ms=400,
+            tokens_input=20,
+            tokens_output=20,
+        )
+    )
+    stable_run_b = _run(
+        TaskResult(
+            task_id=task.task_id,
+            output="Summary: complete.\nActions: execute.",
+            tool_calls=[{"tool": "web_search"}],
+            duration_ms=420,
+            tokens_input=22,
+            tokens_output=21,
+        )
+    )
+    unstable_run = _run(
+        TaskResult(
+            task_id=task.task_id,
+            output="",
+            tool_calls=[],
+            duration_ms=420,
+            tokens_input=22,
+            tokens_output=21,
+            error="timeout",
+        )
+    )
+
+    stable_map = build_stability_map([stable_run_a, stable_run_b], [task])
+    unstable_map = build_stability_map([stable_run_a, unstable_run], [task])
+
+    assert stable_map[task.task_id] > unstable_map[task.task_id]

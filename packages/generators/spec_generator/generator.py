@@ -10,7 +10,7 @@ from packages.core.validation import validate_eval_spec
 
 def generate_eval_spec(
     profile: SkillProfile,
-    model: str = "gpt-4o",
+    model: str = "",
     task_count: int = 30,
 ) -> EvalSpec:
     """Generate an EvalSpec based on a SkillProfile.
@@ -18,8 +18,12 @@ def generate_eval_spec(
     Uses heuristics to determine appropriate task categories and test
     objectives based on the skill's problem domain and capabilities.
     """
+    if not model:
+        raise ValueError("model is required to generate an evaluation spec")
+
     # Determine task categories from problem domain
     categories = _infer_categories(profile, task_count)
+    default_tools = _infer_default_tools(categories)
 
     # Build test objectives
     objectives = [
@@ -36,7 +40,7 @@ def generate_eval_spec(
         model=model,
         temperature=0.0,
         system_prompt="You are a helpful AI assistant.",
-        tools=[],
+        tools=default_tools,
         timeout_seconds=120,
         seed=42,
     )
@@ -47,7 +51,7 @@ def generate_eval_spec(
         temperature=0.0,
         system_prompt="You are a helpful AI assistant.",
         skill_content=skill_content,
-        tools=[],
+        tools=default_tools,
         timeout_seconds=120,
         seed=42,
     )
@@ -110,3 +114,11 @@ def _read_full_skill_content(profile: SkillProfile) -> str:
             if f.exists():
                 return f.read_text(encoding="utf-8")
     return profile.content_summary
+
+
+def _infer_default_tools(categories: list[TaskCategory]) -> list[str]:
+    tool_set: set[str] = set()
+    category_names = {category.name for category in categories}
+    if "retrieval" in category_names:
+        tool_set.add("web_search")
+    return sorted(tool_set)

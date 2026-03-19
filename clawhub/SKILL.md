@@ -21,8 +21,8 @@ Evaluate whether an AI agent skill actually improves performance, or just adds c
 
 This skill is designed to run **inside the same agent or runtime** that will use the evaluated skills (e.g. Cursor agent, OpenClaw, ClaudeCode). In that case:
 
-- **Steps 4–5 (baseline / with-skill)** are executed by the current agent: you run the same test tasks once without the target skill in context, and once with it. The agent’s existing model access is used; no separate `OPENAI_API_KEY` or other API key is required for the skill itself.
-- The optional **standalone CLI** (`skillprobe evaluate …`) is for local runs outside an agent; only that path may require a configured LLM API key (e.g. `OPENAI_API_KEY`).
+- **Steps 4–5 (baseline / with-skill)** are executed by the current agent: you run the same test tasks once without the target skill in context, and once with it. The agent’s existing model access is used; no separate API key is required for the skill itself.
+- The optional **standalone CLI** (`skillprobe evaluate …`) is for local runs outside an agent; that path should use whatever provider/model the local runtime is already configured to use.
 
 So: **in-agent or in OpenClaw/ClaudeCode, the skill is directly testable** — follow the 7-step workflow using the runtime’s own model and tools.
 
@@ -183,7 +183,7 @@ The final report should follow this structure:
 ## Packaging Note
 
 - **Primary use**: In ClawHub/OpenClaw or in an agent (e.g. Cursor, ClaudeCode), this skill is used as a prompt-driven workflow. The agent executes baseline and with-skill runs itself using the runtime’s model; no extra API key is required.
-- The bundled `scripts/evaluate.sh` is an **optional** helper for standalone local runs; it invokes the SkillProbe Python CLI when installed. That CLI path may require a configured LLM API key (e.g. `OPENAI_API_KEY`).
+- The bundled `scripts/evaluate.sh` is an **optional** helper for standalone local runs; it invokes the SkillProbe Python CLI when installed. That CLI path should use the local runtime’s configured provider and model settings.
 - If you are not using the CLI, follow the 7-step workflow in this file and state which evidence was or was not directly observable.
 
 ## External Endpoints

@@ -1,6 +1,7 @@
 """Generate synthetic test tasks from EvalSpec and SkillProfile."""
 
 import json
+import re
 import uuid
 from pathlib import Path
 
@@ -161,13 +162,14 @@ def _generate_category_tasks(
                     prompt = prompt.replace(f"{{{key}}}", values[task_num % len(values)])
 
             task_num += 1
+            scoring_hints = _build_scoring_hints(category, template, prompt)
             task = Task(
                 task_id=f"{category.name}-{uuid.uuid4().hex[:6]}",
                 task_type=category.name,
                 prompt=prompt,
                 difficulty=difficulty,
                 category=category.name,
-                scoring_hints=ScoringHints(key_points=template.get("hints", [])),
+                scoring_hints=scoring_hints,
                 risk_level="low" if difficulty in ("easy", "medium") else "medium",
                 tags=profile.problem_domain[:3],
             )
@@ -241,6 +243,40 @@ def _build_placeholders(profile: SkillProfile) -> dict[str, list[str]]:
         "data_block": ["[Data would be inserted here]"],
         "fields": ["name, date, category, value"],
     }
+
+
+def _build_scoring_hints(category: TaskCategory, template: dict, prompt: str) -> ScoringHints:
+    key_points = list(template.get("hints", []))
+    required_tools: list[str] = []
+    required_fields: list[str] = []
+    anti_patterns: list[str] = []
+
+    if category.name == "retrieval":
+        required_tools.append("web_search")
+        anti_patterns.extend(["cannot browse", "can't browse"])
+
+    if category.name == "structured_extraction":
+        required_fields.extend(_extract_required_fields_from_prompt(prompt))
+
+    if category.name == "summarization":
+        required_fields.append("summary")
+
+    return ScoringHints(
+        key_points=key_points,
+        required_tools=required_tools,
+        required_fields=required_fields,
+        anti_patterns=anti_patterns,
+    )
+
+
+def _extract_required_fields_from_prompt(prompt: str) -> list[str]:
+    match = re.search(r"fields from this text:\s*([^\n]+)", prompt, re.IGNORECASE)
+    if not match:
+        return []
+
+    raw_fields = match.group(1)
+    fields = [part.strip() for part in raw_fields.split(",")]
+    return [field for field in fields if field]
 
 
 def save_tasks_jsonl(tasks: list[Task], output_path: str | Path) -> Path:

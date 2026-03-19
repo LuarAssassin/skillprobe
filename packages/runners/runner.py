@@ -4,7 +4,7 @@ import hashlib
 import json
 import time
 import uuid
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from datetime import datetime
 from pathlib import Path
 
@@ -86,14 +86,28 @@ class EvalRun:
         }
 
 
-def run_baseline(tasks: list[Task], spec: EvalSpec) -> EvalRun:
+def run_baseline(
+    tasks: list[Task],
+    spec: EvalSpec,
+    seed_override: int | None = None,
+) -> EvalRun:
     """Run tasks without skill (baseline)."""
-    return _run_tasks(tasks, spec.baseline_config, spec, run_type="baseline")
+    config = spec.baseline_config
+    if seed_override is not None:
+        config = replace(config, seed=seed_override)
+    return _run_tasks(tasks, config, spec, run_type="baseline")
 
 
-def run_with_skill(tasks: list[Task], spec: EvalSpec) -> EvalRun:
+def run_with_skill(
+    tasks: list[Task],
+    spec: EvalSpec,
+    seed_override: int | None = None,
+) -> EvalRun:
     """Run tasks with skill enabled."""
-    return _run_tasks(tasks, spec.skill_config, spec, run_type="with_skill")
+    config = spec.skill_config
+    if seed_override is not None:
+        config = replace(config, seed=seed_override)
+    return _run_tasks(tasks, config, spec, run_type="with_skill")
 
 
 def _run_tasks(
@@ -143,13 +157,18 @@ def _execute_single_task(
 
     start = time.monotonic()
     try:
-        response = completion(
-            model=config.model,
-            messages=messages,
-            temperature=config.temperature,
-            seed=config.seed,
-            timeout=config.timeout_seconds,
-        )
+        completion_kwargs = {
+            "model": config.model,
+            "messages": messages,
+            "temperature": config.temperature,
+            "seed": config.seed,
+            "timeout": config.timeout_seconds,
+        }
+        tools = _normalize_tools(config.tools)
+        if tools:
+            completion_kwargs["tools"] = tools
+
+        response = completion(**completion_kwargs)
         elapsed_ms = int((time.monotonic() - start) * 1000)
 
         result.output = response.choices[0].message.content or ""
@@ -214,6 +233,30 @@ def _build_run_config(config: RunConfig) -> dict:
         ).hexdigest()[:12]
         serialized["skill_content_preview"] = config.skill_content[:120]
     return {key: value for key, value in serialized.items() if value is not None}
+
+
+def _normalize_tools(tools: list[str]) -> list[dict]:
+    """Convert configured tool names to OpenAI-compatible tool descriptors."""
+    normalized: list[dict] = []
+    for tool_name in tools:
+        name = str(tool_name).strip()
+        if not name:
+            continue
+        normalized.append(
+            {
+                "type": "function",
+                "function": {
+                    "name": name,
+                    "description": f"Tool: {name}",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {},
+                        "additionalProperties": True,
+                    },
+                },
+            }
+        )
+    return normalized
 
 
 def _extract_tool_calls(response) -> list[dict]:

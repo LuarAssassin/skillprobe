@@ -17,7 +17,7 @@ class TaskCategory:
 
 @dataclass
 class RunConfig:
-    model: str = "gpt-4o"
+    model: str = ""
     temperature: float = 0.0
     system_prompt: str = ""
     skill_content: str = ""
