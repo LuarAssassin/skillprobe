@@ -1,0 +1,12 @@
+[
+  {"skill_id": "0f12a6b16b4d", "name": "antibody-design-agent"},
+  {"skill_id": "528e01f32a4b", "name": "arboreto"},
+  {"skill_id": "81de1309a5c8", "name": "armored-cart-design-agent"},
+  {"skill_id": "2766b1681ee0", "name": "arxiv-search"},
+  {"skill_id": "e9ddc21bc205", "name": "autonomous-oncology-agent"},
+  {"skill_id": "9f231af95422", "name": "bayesian-optimizer"},
+  {"skill_id": "becaa1a08998", "name": "benchling-integration"},
+  {"skill_id": "285f84cca931", "name": "bgpt-paper-search"},
+  {"skill_id": "affe565921ad", "name": "bindcraft"},
+  {"skill_id": "46620a6ff413", "name": "binder-design"}
+]

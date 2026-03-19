@@ -1,0 +1,12 @@
+[
+  {"skill_id": "d7a2831c885c", "name": "aav-vector-design-agent"},
+  {"skill_id": "cb49057c2ec9", "name": "adaptyv"},
+  {"skill_id": "42af3260eb3e", "name": "adhd-daily-planner"},
+  {"skill_id": "c34839eece8c", "name": "aeon"},
+  {"skill_id": "756cddebef45", "name": "agent-browser"},
+  {"skill_id": "c5d3eb7fa60b", "name": "agentd-drug-discovery"},
+  {"skill_id": "f52f23c7af38", "name": "ai-analyzer"},
+  {"skill_id": "c6105157f61e", "name": "alphafold"},
+  {"skill_id": "473bec9c5235", "name": "alphafold-database"},
+  {"skill_id": "f3874c5d43d8", "name": "anndata"}
+]

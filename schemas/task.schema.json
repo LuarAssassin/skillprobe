@@ -1,0 +1,43 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "task.schema.json",
+  "title": "Task",
+  "description": "单个测试任务",
+  "type": "object",
+  "required": ["task_id", "task_type", "prompt", "difficulty"],
+  "properties": {
+    "task_id": { "type": "string" },
+    "task_type": {
+      "type": "string",
+      "enum": ["retrieval", "qa", "summarization", "structured_extraction", "analysis", "coding", "tool_use", "reasoning", "custom"]
+    },
+    "prompt": { "type": "string", "description": "任务提示词" },
+    "context": { "type": "string", "description": "任务上下文/背景信息" },
+    "expected_artifacts": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "期望产出物描述"
+    },
+    "reference_answer": { "type": "string", "description": "参考答案（如有）" },
+    "scoring_hints": {
+      "type": "object",
+      "properties": {
+        "key_points": { "type": "array", "items": { "type": "string" } },
+        "required_tools": { "type": "array", "items": { "type": "string" } },
+        "required_fields": { "type": "array", "items": { "type": "string" } },
+        "anti_patterns": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "difficulty": {
+      "type": "string",
+      "enum": ["easy", "medium", "hard", "edge"]
+    },
+    "risk_level": {
+      "type": "string",
+      "enum": ["low", "medium", "high"],
+      "default": "low"
+    },
+    "category": { "type": "string" },
+    "tags": { "type": "array", "items": { "type": "string" } }
+  }
+}

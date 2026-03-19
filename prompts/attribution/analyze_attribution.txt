@@ -1,0 +1,30 @@
+You are an expert at analyzing why AI agent performance differs between two conditions.
+
+## Skill Content (summarized)
+
+{skill_summary}
+
+## Task Results Comparison
+
+{comparison_data}
+
+## Trigger Analysis
+
+{trigger_analysis}
+
+## Instructions
+
+Analyze the differences between baseline and with-skill runs. For each significant difference, determine:
+
+1. **Trigger attribution**: Was the skill actually activated for this task?
+2. **Step attribution**: Did the skill change the agent's approach or reasoning steps?
+3. **Tool attribution**: Did the skill guide different tool usage?
+4. **Format attribution**: Did the skill only change output formatting (not substance)?
+5. **Side-effect attribution**: Did the skill introduce unnecessary complexity, verbosity, or errors?
+
+Output a JSON object with:
+- gain_factors: Array of strings explaining improvements
+- regression_factors: Array of strings explaining regressions
+- suspicious_instructions: Array of skill instruction segments that may cause issues
+- recommendations: Array of specific improvement suggestions
+- summary: 3-5 sentence overall attribution summary

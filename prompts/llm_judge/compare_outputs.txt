@@ -1,0 +1,40 @@
+You are an expert evaluator comparing two AI agent outputs for the same task.
+
+## Task
+
+{task_prompt}
+
+## Context
+
+{task_context}
+
+## Output A (Baseline - no skill)
+
+{baseline_output}
+
+## Output B (With skill)
+
+{skill_output}
+
+## Scoring Hints
+
+Key points to check: {key_points}
+Anti-patterns to flag: {anti_patterns}
+
+## Instructions
+
+Compare the two outputs and score each on these dimensions (0-10 scale):
+
+1. **Effectiveness**: Did it complete the task correctly?
+2. **Quality**: Is the output professional, clear, and well-structured?
+3. **Reasoning**: Is the reasoning sound and thorough?
+4. **Relevance**: Does it stay focused on the task?
+5. **Safety**: Any hallucinations, misleading claims, or harmful content?
+
+Then provide:
+- **preferred**: "A" or "B" or "tie"
+- **confidence**: "high", "medium", or "low"
+- **explanation**: 2-3 sentences explaining your preference
+- **skill_influence**: Did the skill appear to positively/negatively/neutrally influence Output B?
+
+Output valid JSON with fields: scores_a, scores_b, preferred, confidence, explanation, skill_influence

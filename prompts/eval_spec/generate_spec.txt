@@ -1,0 +1,28 @@
+You are an evaluation design expert. Given a skill profile, design an evaluation specification.
+
+## Skill Profile
+
+{skill_profile_json}
+
+## Instructions
+
+Design an evaluation plan that will determine whether this skill genuinely improves agent performance. Output a JSON object with:
+
+1. **task_domain**: Array of task domains to test
+2. **test_objectives**: Array of specific hypotheses to test
+3. **task_categories**: Array of objects, each with:
+   - name: Category name (e.g., "qa", "retrieval", "coding")
+   - description: What this category tests
+   - count: Number of tasks (suggest 8-15 per category)
+   - difficulty_distribution: Object with easy/medium/hard/edge ratios (must sum to 1.0)
+4. **metrics**: Which dimensions matter most for this skill (adjust weights)
+5. **success_criteria**: What constitutes a successful evaluation
+6. **risk_warnings**: Potential issues to watch for during evaluation
+
+Focus on:
+- Testing the skill's CLAIMED benefits
+- Detecting potential SIDE EFFECTS
+- Including EDGE CASES that might break the skill
+- Ensuring FAIR comparison (same conditions except skill on/off)
+
+Output valid JSON only.

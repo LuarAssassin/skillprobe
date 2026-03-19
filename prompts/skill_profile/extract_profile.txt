@@ -1,0 +1,26 @@
+You are a skill analysis expert. Given the following AI agent skill content, extract a structured profile.
+
+## Skill Content
+
+{skill_content}
+
+## Instructions
+
+Analyze the skill and output a JSON object with these fields:
+
+1. **name**: The skill's name
+2. **description**: A concise description (1-2 sentences)
+3. **problem_domain**: Array of problem domains this skill addresses (e.g., ["code review", "React performance"])
+4. **trigger_conditions**: Array of conditions when this skill should activate
+5. **capabilities**: Array of specific capabilities the skill provides
+6. **dependencies**: Object with:
+   - tools: External tools required
+   - models: Model requirements
+   - data_sources: Data sources needed
+7. **boundaries**: Object with:
+   - applicable: Scenarios where the skill is useful
+   - not_applicable: Scenarios where the skill should NOT be used
+8. **rule_count**: Estimated number of distinct rules/guidelines
+9. **content_summary**: A 2-3 sentence summary of the skill's core value
+
+Output valid JSON only, no markdown fences.

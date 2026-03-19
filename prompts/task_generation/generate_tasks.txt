@@ -1,0 +1,38 @@
+You are a test task designer. Generate realistic test tasks for evaluating an AI agent skill.
+
+## Skill Profile
+
+{skill_profile_json}
+
+## Task Category
+
+Category: {category_name}
+Description: {category_description}
+Difficulty: {difficulty}
+
+## Instructions
+
+Generate {count} test tasks at {difficulty} difficulty level. Each task should:
+
+1. Be realistic and representative of actual use cases
+2. Have a clear, unambiguous prompt
+3. Include context if needed
+4. Have identifiable success criteria
+
+For each task, output a JSON object with:
+- task_id: Unique identifier (format: "{category}-{difficulty}-{number}")
+- task_type: "{category_name}"
+- prompt: The actual task prompt
+- context: Background information (if needed)
+- expected_artifacts: What the agent should produce
+- scoring_hints: Object with key_points, required_tools, required_fields, anti_patterns
+- difficulty: "{difficulty}"
+- risk_level: "low", "medium", or "high"
+
+Difficulty guidelines:
+- easy: Straightforward, single-step tasks
+- medium: Multi-step tasks requiring some reasoning
+- hard: Complex tasks requiring deep expertise
+- edge: Ambiguous, contradictory, or adversarial inputs
+
+Output a JSON array of task objects.

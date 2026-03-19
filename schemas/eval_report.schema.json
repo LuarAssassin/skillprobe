@@ -1,0 +1,145 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "eval_report.schema.json",
+  "title": "EvalReport",
+  "description": "评测报告",
+  "type": "object",
+  "required": ["report_id", "eval_spec_id", "baseline_run_id", "skill_run_id", "scores", "recommendation"],
+  "properties": {
+    "report_id": { "type": "string" },
+    "eval_spec_id": { "type": "string" },
+    "skill_profile_id": { "type": "string" },
+    "baseline_run_id": { "type": "string" },
+    "skill_run_id": { "type": "string" },
+    "generated_at": { "type": "string", "format": "date-time" },
+    "scores": {
+      "type": "object",
+      "properties": {
+        "baseline": { "$ref": "#/definitions/eval_score" },
+        "with_skill": { "$ref": "#/definitions/eval_score" },
+        "net_gain": { "type": "number" },
+        "value_index": { "type": "number" }
+      },
+      "required": ["baseline", "with_skill", "net_gain"]
+    },
+    "per_category_comparison": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "category": { "type": "string" },
+          "baseline_score": { "type": "number" },
+          "skill_score": { "type": "number" },
+          "delta": { "type": "number" },
+          "verdict": { "type": "string" }
+        }
+      }
+    },
+    "trigger_analysis": {
+      "type": "object",
+      "properties": {
+        "trigger_rate": { "type": "number" },
+        "false_trigger_rate": { "type": "number" },
+        "missed_trigger_rate": { "type": "number" },
+        "trigger_utility": { "type": "number" }
+      }
+    },
+    "attribution": {
+      "type": "object",
+      "properties": {
+        "gain_factors": { "type": "array", "items": { "type": "string" } },
+        "regression_factors": { "type": "array", "items": { "type": "string" } },
+        "suspicious_instructions": { "type": "array", "items": { "type": "string" } },
+        "summary": { "type": "string" },
+        "trigger_analysis": { "type": "object" },
+        "per_task": { "type": "array", "items": { "type": "object" } }
+      }
+    },
+    "score_evidence": {
+      "type": "object",
+      "properties": {
+        "baseline": { "$ref": "#/definitions/score_evidence" },
+        "with_skill": { "$ref": "#/definitions/score_evidence" }
+      }
+    },
+    "reproducibility": {
+      "type": "object",
+      "properties": {
+        "baseline": { "type": "object" },
+        "with_skill": { "type": "object" }
+      }
+    },
+    "exemplars": {
+      "type": "object",
+      "properties": {
+        "best_improvements": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/exemplar" }
+        },
+        "worst_regressions": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/exemplar" }
+        }
+      }
+    },
+    "recommendation": {
+      "type": "object",
+      "properties": {
+        "label": {
+          "type": "string",
+          "enum": ["recommended", "conditionally_recommended", "not_recommended", "needs_revision", "inconclusive"]
+        },
+        "detail": { "type": "string" }
+      },
+      "required": ["label", "detail"]
+    },
+    "improvement_suggestions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "target": { "type": "string" },
+          "issue": { "type": "string" },
+          "suggestion": { "type": "string" },
+          "priority": { "type": "string", "enum": ["high", "medium", "low"] }
+        }
+      }
+    }
+  },
+  "definitions": {
+    "eval_score": {
+      "type": "object",
+      "properties": {
+        "total": { "type": "number" },
+        "effectiveness": { "type": "number" },
+        "quality": { "type": "number" },
+        "efficiency": { "type": "number" },
+        "stability": { "type": "number" },
+        "trigger_fitness": { "type": "number" },
+        "safety": { "type": "number" }
+      },
+      "required": ["total"]
+    },
+    "exemplar": {
+      "type": "object",
+      "properties": {
+        "task_id": { "type": "string" },
+        "task_prompt": { "type": "string" },
+        "baseline_output_summary": { "type": "string" },
+        "skill_output_summary": { "type": "string" },
+        "score_delta": { "type": "number" },
+        "explanation": { "type": "string" }
+      }
+    },
+    "score_evidence": {
+      "type": "object",
+      "properties": {
+        "task_count": { "type": "integer" },
+        "avg_rule_score": { "type": "number" },
+        "avg_result_score": { "type": "number" },
+        "avg_llm_judge_score": { "type": "number" },
+        "notable_notes": { "type": "array", "items": { "type": "string" } }
+      }
+    }
+  }
+}

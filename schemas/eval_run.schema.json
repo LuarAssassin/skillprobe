@@ -1,0 +1,83 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "eval_run.schema.json",
+  "title": "EvalRun",
+  "description": "单次评测运行记录",
+  "type": "object",
+  "required": ["run_id", "eval_spec_id", "run_type", "started_at", "task_results"],
+  "properties": {
+    "run_id": { "type": "string" },
+    "eval_spec_id": { "type": "string" },
+    "run_type": {
+      "type": "string",
+      "enum": ["baseline", "with_skill"]
+    },
+    "config": {
+      "type": "object",
+      "properties": {
+        "model": { "type": "string" },
+        "temperature": { "type": "number" },
+        "system_prompt": { "type": "string" },
+        "skill_content": { "type": "string" },
+        "skill_content_hash": { "type": "string" },
+        "skill_content_preview": { "type": "string" },
+        "tools": { "type": "array", "items": { "type": "string" } },
+        "timeout_seconds": { "type": "integer" },
+        "seed": { "type": "integer" }
+      }
+    },
+    "started_at": { "type": "string", "format": "date-time" },
+    "completed_at": { "type": "string", "format": "date-time" },
+    "task_results": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["task_id", "output"],
+        "properties": {
+          "task_id": { "type": "string" },
+          "output": { "type": "string" },
+          "reasoning_summary": { "type": "string" },
+          "tool_calls": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "tool": { "type": "string" },
+                "input": {},
+                "output": {},
+                "duration_ms": { "type": "integer" }
+              }
+            }
+          },
+          "artifacts": { "type": "array", "items": { "type": "string" } },
+          "duration_ms": { "type": "integer" },
+          "tokens_used": {
+            "type": "object",
+            "properties": {
+              "input": { "type": "integer" },
+              "output": { "type": "integer" }
+            }
+          },
+          "error": { "type": "string" },
+          "skill_triggered": { "type": "boolean" },
+          "skill_trigger_count": { "type": "integer" },
+          "skill_trigger_points": {
+            "type": "array",
+            "items": { "type": "string" }
+          }
+        }
+      }
+    },
+    "summary": {
+      "type": "object",
+      "properties": {
+        "total_tasks": { "type": "integer" },
+        "completed": { "type": "integer" },
+        "failed": { "type": "integer" },
+        "total_duration_ms": { "type": "integer" },
+        "total_tokens": { "type": "integer" },
+        "skill_trigger_rate": { "type": "number" }
+      }
+    }
+  }
+}
