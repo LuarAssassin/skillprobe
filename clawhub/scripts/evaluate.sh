@@ -12,9 +12,9 @@ set -euo pipefail
 # This script runs the full evaluation pipeline on a target skill directory.
 
 if [ $# -lt 1 ]; then
-    echo "Usage: evaluate.sh <skill-path> [--model MODEL] [--tasks COUNT]"
+    echo "Usage: evaluate.sh <skill-path> [--model MODEL] [--tasks COUNT] [--repeats N] [--llm-judge] [--judge-model MODEL] [--db PATH]"
     echo ""
-    echo "Example: evaluate.sh ./skills/my-skill --model your-model --tasks 30"
+    echo "Example: evaluate.sh ./skills/my-skill --model your-model --tasks 30 --repeats 2 --llm-judge --db outputs/evaluations.db"
     exit 1
 fi
 
@@ -23,6 +23,10 @@ shift
 
 MODEL=""
 TASKS=30
+REPEATS=2
+ENABLE_LLM_JUDGE=0
+JUDGE_MODEL=""
+DB_PATH="outputs/evaluations.db"
 
 while [[ $# -gt 0 ]]; do
     case $1 in
@@ -32,6 +36,22 @@ while [[ $# -gt 0 ]]; do
             ;;
         --tasks)
             TASKS=$(printf '%s' "$2" | tr -cd '[:digit:]')
+            shift 2
+            ;;
+        --repeats)
+            REPEATS=$(printf '%s' "$2" | tr -cd '[:digit:]')
+            shift 2
+            ;;
+        --llm-judge)
+            ENABLE_LLM_JUDGE=1
+            shift
+            ;;
+        --judge-model)
+            JUDGE_MODEL=$(printf '%s' "$2" | tr -cd '[:alnum:]._-/')
+            shift 2
+            ;;
+        --db)
+            DB_PATH=$(printf '%s' "$2" | tr -cd '[:alnum:]._/-')
             shift 2
             ;;
         *)
@@ -49,6 +69,10 @@ fi
 echo "SkillProbe: Evaluating skill at $SKILL_PATH"
 echo "  Model: ${MODEL:-<runtime-configured>}"
 echo "  Tasks: $TASKS"
+echo "  Repeats: $REPEATS"
+echo "  LLM Judge: $([ "$ENABLE_LLM_JUDGE" -eq 1 ] && echo enabled || echo disabled)"
+echo "  Judge model: ${JUDGE_MODEL:-<same as eval model>}"
+echo "  SQLite DB: $DB_PATH"
 echo ""
 
 SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
@@ -76,16 +100,22 @@ If you want the local CLI evaluator, install the full SkillProbe project first:
   1. Clone or open the full skillprobe source tree
   2. Run: pip install -e /path/to/skillprobe
   3. Re-run either:
-     - skillprobe evaluate <skill-path> --model $MODEL --tasks $TASKS
-     - bash clawhub/scripts/evaluate.sh <skill-path> --model $MODEL --tasks $TASKS
+     - skillprobe evaluate <skill-path> --model $MODEL --tasks $TASKS --repeats $REPEATS --db $DB_PATH
+     - bash clawhub/scripts/evaluate.sh <skill-path> --model $MODEL --tasks $TASKS --repeats $REPEATS --db $DB_PATH
 EOF
     exit 1
 fi
 
 if [ -f "$PACKAGE_ROOT/apps/cli/main.py" ]; then
-    CMD=(python -m apps.cli.main evaluate "$SKILL_PATH" --tasks "$TASKS")
+    CMD=(python -m apps.cli.main evaluate "$SKILL_PATH" --tasks "$TASKS" --repeats "$REPEATS" --db "$DB_PATH")
     if [ -n "$MODEL" ]; then
         CMD+=(--model "$MODEL")
+    fi
+    if [ "$ENABLE_LLM_JUDGE" -eq 1 ]; then
+        CMD+=(--llm-judge)
+    fi
+    if [ -n "$JUDGE_MODEL" ]; then
+        CMD+=(--judge-model "$JUDGE_MODEL")
     fi
     (
         cd "$PACKAGE_ROOT"
@@ -95,9 +125,15 @@ if [ -f "$PACKAGE_ROOT/apps/cli/main.py" ]; then
 fi
 
 if command -v skillprobe >/dev/null 2>&1; then
-    CMD=(skillprobe evaluate "$SKILL_PATH" --tasks "$TASKS")
+    CMD=(skillprobe evaluate "$SKILL_PATH" --tasks "$TASKS" --repeats "$REPEATS" --db "$DB_PATH")
     if [ -n "$MODEL" ]; then
         CMD+=(--model "$MODEL")
+    fi
+    if [ "$ENABLE_LLM_JUDGE" -eq 1 ]; then
+        CMD+=(--llm-judge)
+    fi
+    if [ -n "$JUDGE_MODEL" ]; then
+        CMD+=(--judge-model "$JUDGE_MODEL")
     fi
     "${CMD[@]}"
     exit 0

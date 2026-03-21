@@ -1,0 +1,36 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+dist/
+build/
+*.egg
+
+# SQLite databases
+*.db
+*.sqlite
+*.sqlite3
+
+# Evaluation outputs (contain test data and results)
+outputs/runs/
+outputs/evaluations.db
+outputs/evaluations_export.json
+outputs/in-agent-eval-report.md
+
+# Batch skill evaluation results (contain test data)
+outputs/batch_skills/*/eval_results.json
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Environment
+.env
+.env.*

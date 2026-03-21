@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # 对 OpenClaw-Medical-Skills 中的 adhd-daily-planner 与 ai-analyzer 做真实 A/B 评测
-# 需要先设置 OPENAI_API_KEY，并已克隆 OpenClaw-Medical-Skills 到 REPO/skills 或通过参数指定
+# 使用当前运行时已配置的模型提供方；无需强制绑定 OpenAI
 
 set -euo pipefail
 
@@ -8,14 +8,7 @@ SKILLPROBE_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 MEDICAL_SKILLS_ROOT="${MEDICAL_SKILLS_ROOT:-/tmp/OpenClaw-Medical-Skills}"
 OUTPUT_BASE="${SKILLPROBE_ROOT}/outputs/medical-eval"
 TASKS="${TASKS:-3}"
-MODEL="${MODEL:-gpt-4o}"
-
-if [ -z "${OPENAI_API_KEY:-}" ]; then
-    echo "Error: OPENAI_API_KEY is required for real evaluation."
-    echo "  export OPENAI_API_KEY=sk-..."
-    echo "  $0"
-    exit 1
-fi
+MODEL="${MODEL:-${SKILLPROBE_MODEL:-}}"
 
 if [ ! -d "$MEDICAL_SKILLS_ROOT/skills" ]; then
     echo "Cloning OpenClaw-Medical-Skills to $MEDICAL_SKILLS_ROOT ..."
@@ -31,10 +24,11 @@ run_one() {
     echo "=============================================="
     echo "Evaluating: $name"
     echo "=============================================="
-    python -m apps.cli.main evaluate "$path" \
-        --model "$MODEL" \
-        --tasks "$TASKS" \
-        --output-dir "${OUTPUT_BASE}/${name}"
+    local cmd=(python -m apps.cli.main evaluate "$path" --tasks "$TASKS" --output-dir "${OUTPUT_BASE}/${name}")
+    if [ -n "$MODEL" ]; then
+        cmd+=(--model "$MODEL")
+    fi
+    "${cmd[@]}"
     echo ""
 }
 

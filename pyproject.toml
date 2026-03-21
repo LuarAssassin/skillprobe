@@ -4,7 +4,7 @@ build-backend = "setuptools.backends._legacy:_Backend"
 
 [project]
 name = "skillprobe"
-version = "0.1.0"
+version = "1.0.0"
 description = "A/B evaluate AI agent skills and drive continuous improvement"
 requires-python = ">=3.11"
 dependencies = [
